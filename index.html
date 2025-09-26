@@ -26,13 +26,22 @@
             position: absolute;
             bottom: 20px;
             left: 20px;
-            color: #666;
-            font-size: 14px;
+            color: rgba(80, 80, 80, 0.7);
+            font-family: 'Orator Std', monospace;
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: opacity 0.3s ease;
+            
         }
+        .info:hover {
+            opacity: 0.9;
+        }
+        
     </style>
 </head>
 <body>
-    <div class="info">Click on the circles to toggle animation</div>
+    <div class="info">Click circles to toggle pause</div>
     
     <script>
         let pauseImage;

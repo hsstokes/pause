@@ -39,6 +39,8 @@
         let lines = [];
         let isAnimating = false;
         let percentLoaded = 0;
+        let pauseText = "";
+        let pauseTextTimer = 0;
 
         function preload() {
             pauseImage = loadImage('pause.png');
@@ -58,7 +60,6 @@
             circles.push(new InteractiveCircle(475, 200, 30, 'black')); // Center lines
             circles.push(new InteractiveCircle(350, 500, 25, 'tag')); // END tag area
             
-            // In setup, change the line creation to:
             // Create interactive lines that follow the exact diagonal pattern in the image
             let lineStartX = 385;
             let lineStartY = 392;
@@ -104,13 +105,19 @@
             
             // Add indicators based on animation state
             if (isAnimating) {
-                textSize(11);
-                textFont('monospace');
+                // Subtle play indicator that fits with the % symbol area
+                textSize(9);
+                textFont('Courier New');
                 textAlign(CENTER);
-                fill(60, 60, 60, 140);
-                text("PLAY", 478, 78);
+                fill(80, 80, 80, 110);
+                text("P L A Y", 780, 344);
+                
+                // Add a subtle underline
+                stroke(80, 80, 80, 60);
+                strokeWeight(0.5);
+                line(765, 347, 795, 347);
               
-            // Add a subtle progress indicator on the END tag
+                // Add a subtle progress indicator on the END tag
                 noFill();
                 stroke(120, 120, 120, 100);
                 strokeWeight(0.5);
@@ -119,11 +126,77 @@
                 fill(120, 120, 120, 100);
                 rect(350, 500 + 15, progressWidth * (frameCount % 100)/100, 3);
             } else {
-                textSize(11);
-                textFont('monospace');
+                // Typewriter effect for PAUSE
+                textSize(9);
+                textFont('Courier New');
                 textAlign(CENTER);
-                fill(60, 60, 60, 140);
-                text("PAUSE", 478, 78);
+                fill(80, 80, 80, 110);
+                
+                // Typewriter effect
+                if (pauseTextTimer < 5) {
+                    pauseTextTimer++;
+                } else {
+                    if (pauseText.length < 5) {
+                        pauseText = "PAUSE".substring(0, pauseText.length + 1);
+                        pauseTextTimer = 0;
+                    }
+                }
+                text(pauseText, 780, 344);
+            }
+
+            // Animated ring around the purple circle
+            let circleX = 600; 
+            let circleY = 640; 
+            let circleRadius = 30;
+            noFill();
+            stroke(60, 30, 80, 70 + 30 * sin(frameCount * 0.05));
+            strokeWeight(1);
+            ellipse(circleX, circleY, circleRadius * 2 + 5 + 3 * sin(frameCount * 0.05));
+            
+            // Subtle grid animation in blue area
+            if (isAnimating) {
+                push();
+                stroke(255, 255, 255, 20 + 10 * sin(frameCount * 0.02));
+                strokeWeight(0.3);
+                let gridSize = 15;
+                let gridX = 150; // Blue grid area center
+                let gridY = 150;
+                let gridWidth = 100;
+                let gridHeight = 100;
+                for (let x = gridX - gridWidth/2; x <= gridX + gridWidth/2; x += gridSize) {
+                    line(x, gridY - gridHeight/2, x, gridY + gridHeight/2);
+                }
+                for (let y = gridY - gridHeight/2; y <= gridY + gridHeight/2; y += gridSize) {
+                    line(gridX - gridWidth/2, y, gridX + gridWidth/2, y);
+                }
+                pop();
+                
+                // Animated dots for the "END" tag
+                for (let i = 0; i < 3; i++) {
+                    let dotX = 350 + i * 15;
+                    let dotY = 735;
+                    let alpha = 80 + 70 * sin(frameCount * 0.05 + i * 0.5);
+                    fill(100, 100, 100, alpha);
+                    noStroke();
+                    ellipse(dotX, dotY, 3, 3);
+                }
+                
+                // Subtle movement of central line structure
+                push();
+                stroke(0, 0, 0, 60);
+                strokeWeight(0.5);
+                let lineCount = 6;
+                let lineSpacing = 8;
+                let lineStartX = 700;
+                let lineY = 400;
+                let amplitude = 2;
+                
+                for (let i = 0; i < lineCount; i++) {
+                    let offset = amplitude * sin(frameCount * 0.03 + i * 0.2);
+                    line(lineStartX, lineY + i * lineSpacing + offset, 
+                         lineStartX + 80, lineY + i * lineSpacing - offset);
+                }
+                pop();
             }
         }
 
@@ -143,6 +216,11 @@
             // Toggle animation state for all elements
             for (let line of lines) {
                 line.isAnimating = isAnimating;
+            }
+            
+            // Reset typewriter effect when starting animation
+            if (isAnimating) {
+                pauseText = "";
             }
         }
 
@@ -177,7 +255,7 @@
                 this.radius = radius;
                 this.originalRadius = radius;
                 this.hover = false;
-                this.colorScheme = colorScheme; // Now correctly defined
+                this.colorScheme = colorScheme;
             }
             
             update() {
@@ -251,6 +329,7 @@
                     }
                 }
             }
+            
             contains(px, py) {
                 return dist(px, py, this.x, this.y) < this.radius;
             }
@@ -304,4 +383,4 @@
         }
     </script>
 </body>
-</html> 
+</html>

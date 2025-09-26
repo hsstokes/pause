@@ -46,8 +46,6 @@
 
         function setup() {
              // Create canvas with proper aspect ratio
-            let img = createImage(1);
-            img.src = pauseImage;
             let aspectRatio = pauseImage.width / pauseImage.height;
   
             // Set a fixed width and calculate height based on aspect ratio
@@ -56,13 +54,21 @@
             createCanvas(canvasWidth, canvasHeight);
             
             // Create interactive circles at key points
-            circles.push(new InteractiveCircle(150, 150, 40, color(255, 255, 255, 180))); // Blue grid area
-            circles.push(new InteractiveCircle(475, 200, 30, color(200, 200, 200, 180))); // Center lines
-            circles.push(new InteractiveCircle(350, 500, 25, color(100, 100, 100, 180))); // END tag area
+            circles.push(new InteractiveCircle(150, 150, 40, 'blue')); // Blue grid area
+            circles.push(new InteractiveCircle(475, 200, 30, 'black')); // Center lines
+            circles.push(new InteractiveCircle(350, 500, 25, 'tag')); // END tag area
             
-            // Create interactive lines that follow the diagonal pattern
-            for (let i = 0; i < 8; i++) {
-                lines.push(new AnimatedLine(350, 200 + i*15, 500, 200 + i*15));
+            // In setup, change the line creation to:
+            // Create interactive lines that follow the exact diagonal pattern in the image
+            let lineStartX = 385;
+            let lineStartY = 392;
+            let lineEndX = 560;
+            let lineEndY = 392;
+            let lineSpacing = 8;
+            
+            for (let i = 0; i < 10; i++) {
+                let y = lineStartY - i * lineSpacing;
+                lines.push(new AnimatedLine(lineStartX, y, lineEndX, y));
             }
             
             // Loading animation
@@ -96,10 +102,29 @@
                 line.display();
             }
             
-            // Add a subtle % indicator in the top corner where the "%" sign is in the image
-            textSize(14);
-            fill(80, 80, 80, 150);
-            text(isAnimating ? "PLAY" : "PAUSE", 478, 78);
+            // Add indicators based on animation state
+            if (isAnimating) {
+                textSize(11);
+                textFont('monospace');
+                textAlign(CENTER);
+                fill(60, 60, 60, 140);
+                text("PLAY", 478, 78);
+              
+            // Add a subtle progress indicator on the END tag
+                noFill();
+                stroke(120, 120, 120, 100);
+                strokeWeight(0.5);
+                let progressWidth = 30;
+                rect(350, 500 + 15, progressWidth, 3);
+                fill(120, 120, 120, 100);
+                rect(350, 500 + 15, progressWidth * (frameCount % 100)/100, 3);
+            } else {
+                textSize(11);
+                textFont('monospace');
+                textAlign(CENTER);
+                fill(60, 60, 60, 140);
+                text("PAUSE", 478, 78);
+            }
         }
 
         function mousePressed() {
@@ -146,13 +171,13 @@
 
         // Interactive circle class
         class InteractiveCircle {
-            constructor(x, y, radius, color) {
+            constructor(x, y, radius, colorScheme) {
                 this.x = x;
                 this.y = y;
                 this.radius = radius;
-                this.color = color;
                 this.originalRadius = radius;
                 this.hover = false;
+                this.colorScheme = colorScheme; // Now correctly defined
             }
             
             update() {
@@ -169,17 +194,63 @@
             
             display() {
                 noStroke();
-                fill(this.color);
-                ellipse(this.x, this.y, this.radius * 2);
                 
-                if (this.hover) {
-                    fill(50, 50, 50, 150);
-                    textAlign(CENTER, CENTER);
-                    textSize(12);
-                    text(isAnimating ? "PAUSE" : "PLAY", this.x, this.y);
+                // Apply different styles based on the area of the image
+                if (this.colorScheme === 'blue') {
+                  // Blue grid area style
+                  fill(80, 170, 210, this.hover ? 180 : 120);
+                  ellipse(this.x, this.y, this.radius * 2);
+                  if (this.hover) {
+                    stroke(255);
+                    strokeWeight(1);
+                    noFill();
+                    ellipse(this.x, this.y, this.radius * 2.2);
+                  }
+                 } 
+                 else if (this.colorScheme === 'tag') {
+                   // END tag area style
+                   noFill();
+                   stroke(100, 100, 100, this.hover ? 180 : 120);
+                   strokeWeight(1.5);
+                   rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3);
+                   if (this.hover) {
+                      fill(220, 220, 220, 120);
+                      rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3);
+                   }
+                  }
+                  else {
+                    // Center lines area style - make a small line segment instead of a circle
+                    stroke(0, 0, 0, this.hover ? 180 : 120);
+                    strokeWeight(2);
+                    line(this.x - this.radius, this.y, this.x + this.radius, this.y);
+      
+                     if (this.hover) {
+                        noFill();
+                        strokeWeight(1);
+                        ellipse(this.x, this.y, this.radius * 2);
+                     }
+                    }
+    
+                    // Clearer play/pause indication that fits the aesthetic
+                    if (this.hover) {
+                      if (isAnimating) {
+                        // Pause symbol
+                        fill(40, 40, 40, 180);
+                        noStroke();
+                        rect(this.x - this.radius/3, this.y - this.radius/2, this.radius/4, this.radius);
+                        rect(this.x + this.radius/8, this.y - this.radius/2, this.radius/4, this.radius);
+                    } else {
+                        // Play symbol
+                        fill(40, 40, 40, 180);
+                        noStroke();
+                        beginShape();
+                        vertex(this.x - this.radius/3, this.y - this.radius/2);
+                        vertex(this.x + this.radius/2, this.y);
+                        vertex(this.x - this.radius/3, this.y + this.radius/2);
+                        endShape(CLOSE);
+                    }
                 }
             }
-            
             contains(px, py) {
                 return dist(px, py, this.x, this.y) < this.radius;
             }
@@ -197,9 +268,10 @@
                 this.y1 = y1;
                 this.x2 = x2;
                 this.y2 = y2;
-                this.progress = 0;
+                this.progress = random(0, 1); // Start at random positions
                 this.isAnimating = false;
                 this.speed = random(0.005, 0.02);
+                this.dotSize = random(3, 6); // Varied dot sizes
             }
             
             update() {
@@ -212,24 +284,24 @@
             }
             
             display() {
-                stroke(0, 0, 0, 150);
-                strokeWeight(1);
+                stroke(0, 0, 0, 100);
+                strokeWeight(0.8);
+
+                // Draw the line
+                line(this.x1, this.y1, this.x2, this.y2);
                 
                 if (this.isAnimating) {
                     // Animate a dot moving along the line
                     let px = lerp(this.x1, this.x2, this.progress);
                     let py = lerp(this.y1, this.y2, this.progress);
                     
-                    line(this.x1, this.y1, this.x2, this.y2);
-                    fill(0);
+                    // More elegant dots
+                    fill(0, 0, 0, 180);
                     noStroke();
-                    ellipse(px, py, 5, 5);
-                } else {
-                    // When paused, just show static line
-                    line(this.x1, this.y1, this.x2, this.y2);
+                    ellipse(px, py, this.dotSize, this.dotSize);
                 }
             }
         }
     </script>
 </body>
-</html>
+</html> 

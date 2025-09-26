@@ -45,7 +45,15 @@
         }
 
         function setup() {
-            createCanvas(800, 600);
+             // Create canvas with proper aspect ratio
+            let img = createImage(1);
+            img.src = pauseImage;
+            let aspectRatio = pauseImage.width / pauseImage.height;
+  
+            // Set a fixed width and calculate height based on aspect ratio
+            let canvasWidth = 800;
+            let canvasHeight = canvasWidth / aspectRatio;
+            createCanvas(canvasWidth, canvasHeight);
             
             // Create interactive circles at key points
             circles.push(new InteractiveCircle(150, 150, 40, color(255, 255, 255, 180))); // Blue grid area

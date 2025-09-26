@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Pause</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
@@ -16,36 +16,22 @@
             height: 100vh;
             background-color: #f5f5f5;
             font-family: Arial, sans-serif;
-            overscroll-behavior: none;
-            touch-action: none;
         }
         
         canvas {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
         
         .info {
             position: absolute;
-            bottom: env(safe-area-inset-bottom, 20px);
-            left: env(safe-area-inset-left, 20px);
+            bottom: 20px;
+            left: 20px;
             color: rgba(80, 80, 80, 0.7);
             font-family: 'Orator Std', monospace;
             font-size: 9px;
             letter-spacing: 1px;
             text-transform: uppercase;
-            transition: opacity 0.3s ease;
-            background: rgba(255, 255, 255, 0.3);
-            padding: 5px 10px;
-            border-radius: 3px;
         }
-        
-        .info:hover {
-            opacity: 0.9;
-        }
-        
     </style>
 </head>
 <body>
@@ -60,10 +46,10 @@
         let pauseText = "";
         let pauseTextTimer = 0;
         
-        // Add these new sound-related variables
+        // Sound-related variables
         let pauseSound;
         let soundPlaying = false;
-        let soundEnabled = true;  // Whether sound is enabled globally
+        let soundEnabled = true;
 
         function preload() {
             pauseImage = loadImage('pause.png');
@@ -71,24 +57,25 @@
         }
 
         function setup() {
-            // Create canvas with responsive sizing
-            let canvasWidth = min(windowWidth, 800);
+             // Create canvas with proper aspect ratio
             let aspectRatio = pauseImage.width / pauseImage.height;
+  
+            // Set a fixed width and calculate height based on aspect ratio
+            let canvasWidth = 800;
             let canvasHeight = canvasWidth / aspectRatio;
-            
             createCanvas(canvasWidth, canvasHeight);
             
             // Create interactive circles at key points
-            circles.push(new InteractiveCircle(150 * canvasWidth/800, 150 * canvasHeight/(800/aspectRatio), 40 * canvasWidth/800, 'blue')); // Blue grid area
-            circles.push(new InteractiveCircle(475 * canvasWidth/800, 200 * canvasHeight/(800/aspectRatio), 30 * canvasWidth/800, 'black')); // Center lines
-            circles.push(new InteractiveCircle(350 * canvasWidth/800, 500 * canvasHeight/(800/aspectRatio), 25 * canvasWidth/800, 'tag')); // END tag area
+            circles.push(new InteractiveCircle(150, 150, 40, 'blue')); // Blue grid area
+            circles.push(new InteractiveCircle(475, 200, 30, 'black')); // Center lines
+            circles.push(new InteractiveCircle(350, 500, 25, 'tag')); // END tag area
             
             // Create interactive lines that follow the exact diagonal pattern in the image
-            let lineStartX = 385 * canvasWidth/800;
-            let lineStartY = 392 * canvasHeight/(800/aspectRatio);
-            let lineEndX = 560 * canvasWidth/800;
-            let lineEndY = 392 * canvasHeight/(800/aspectRatio);
-            let lineSpacing = 8 * canvasHeight/(800/aspectRatio);
+            let lineStartX = 385;
+            let lineStartY = 392;
+            let lineEndX = 560;
+            let lineEndY = 392;
+            let lineSpacing = 8;
             
             for (let i = 0; i < 10; i++) {
                 let y = lineStartY - i * lineSpacing;
@@ -103,33 +90,6 @@
                     isAnimating = true;
                 }
             }, 30);
-        }
-
-        function windowResized() {
-            let canvasWidth = min(windowWidth, 800);
-            let aspectRatio = pauseImage.width / pauseImage.height;
-            let canvasHeight = canvasWidth / aspectRatio;
-            
-            resizeCanvas(canvasWidth, canvasHeight);
-            
-            // Update positions of interactive elements
-            circles = [];
-            lines = [];
-            
-            circles.push(new InteractiveCircle(150 * canvasWidth/800, 150 * canvasHeight/(800/aspectRatio), 40 * canvasWidth/800, 'blue'));
-            circles.push(new InteractiveCircle(475 * canvasWidth/800, 200 * canvasHeight/(800/aspectRatio), 30 * canvasWidth/800, 'black'));
-            circles.push(new InteractiveCircle(350 * canvasWidth/800, 500 * canvasHeight/(800/aspectRatio), 25 * canvasWidth/800, 'tag'));
-            
-            let lineStartX = 385 * canvasWidth/800;
-            let lineStartY = 392 * canvasHeight/(800/aspectRatio);
-            let lineEndX = 560 * canvasWidth/800;
-            let lineEndY = 392 * canvasHeight/(800/aspectRatio);
-            let lineSpacing = 8 * canvasHeight/(800/aspectRatio);
-            
-            for (let i = 0; i < 10; i++) {
-                let y = lineStartY - i * lineSpacing;
-                lines.push(new AnimatedLine(lineStartX, y, lineEndX, y));
-            }
         }
 
         function draw() {
@@ -156,28 +116,28 @@
             // Add indicators based on animation state
             if (isAnimating) {
                 // Subtle play indicator that fits with the % symbol area
-                textSize(9 * width/800);
+                textSize(9);
                 textFont('Orator Std');
                 textAlign(CENTER);
                 fill(80, 80, 80, 110);
-                text("P L A Y", width * 0.975, height * 0.43);
+                text("P L A Y", 780, 344);
                 
                 // Add a subtle underline
                 stroke(80, 80, 80, 60);
                 strokeWeight(0.5);
-                line(width * 0.95, height * 0.435, width * 0.995, height * 0.435);
+                line(765, 347, 795, 347);
               
                 // Add a subtle progress indicator on the END tag
                 noFill();
                 stroke(120, 120, 120, 100);
                 strokeWeight(0.5);
-                let progressWidth = 30 * width/800;
-                rect(width * 0.4375, height * 0.625 + 15 * height/800, progressWidth, 3);
+                let progressWidth = 30;
+                rect(350, 500 + 15, progressWidth, 3);
                 fill(120, 120, 120, 100);
-                rect(width * 0.4375, height * 0.625 + 15 * height/800, progressWidth * (frameCount % 100)/100, 3);
+                rect(350, 500 + 15, progressWidth * (frameCount % 100)/100, 3);
             } else {
                 // Typewriter effect for PAUSE
-                textSize(9 * width/800);
+                textSize(9);
                 textFont('Orator Std');
                 textAlign(CENTER);
                 fill(80, 80, 80, 110);
@@ -191,13 +151,13 @@
                         pauseTextTimer = 0;
                     }
                 }
-                text(pauseText, width * 0.975, height * 0.43);
+                text(pauseText, 780, 344);
             }
 
             // Animated ring around the purple circle
-            let circleX = width * 0.75; 
-            let circleY = height * 0.8; 
-            let circleRadius = 30 * width/800;
+            let circleX = 600; 
+            let circleY = 640; 
+            let circleRadius = 30;
             noFill();
             stroke(60, 30, 80, 70 + 30 * sin(frameCount * 0.05));
             strokeWeight(1);
@@ -208,11 +168,11 @@
                 push();
                 stroke(255, 255, 255, 20 + 10 * sin(frameCount * 0.02));
                 strokeWeight(0.3);
-                let gridSize = 15 * width/800;
-                let gridX = width * 0.1875; // Blue grid area center
-                let gridY = height * 0.1875;
-                let gridWidth = 100 * width/800;
-                let gridHeight = 100 * height/800;
+                let gridSize = 15;
+                let gridX = 150; // Blue grid area center
+                let gridY = 150;
+                let gridWidth = 100;
+                let gridHeight = 100;
                 for (let x = gridX - gridWidth/2; x <= gridX + gridWidth/2; x += gridSize) {
                     line(x, gridY - gridHeight/2, x, gridY + gridHeight/2);
                 }
@@ -220,13 +180,12 @@
                     line(gridX - gridWidth/2, y, gridX + gridWidth/2, y);
                 }
             
-                // Add the animated cross right here - it will be part of the same push/pop context
                 // Animated cross that matches the design
                 stroke(80, 170, 210, 90 + 40 * sin(frameCount * 0.03));
                 strokeWeight(1);
-                let crossX = width * 0.5; // Adjust position as needed
-                let crossY = height * 0.5; // Adjust position as needed
-                let crossSize = (10 + 2 * sin(frameCount * 0.04)) * width/800;
+                let crossX = 400; 
+                let crossY = 400; 
+                let crossSize = 10 + 2 * sin(frameCount * 0.04);
                 line(crossX - crossSize, crossY, crossX + crossSize, crossY);
                 line(crossX, crossY - crossSize, crossX, crossY + crossSize);
                 
@@ -234,12 +193,12 @@
                 
                 // Animated dots for the "END" tag
                 for (let i = 0; i < 3; i++) {
-                    let dotX = width * 0.4375 + i * 15 * width/800;
-                    let dotY = height * 0.92;
+                    let dotX = 350 + i * 15;
+                    let dotY = 735;
                     let alpha = 80 + 70 * sin(frameCount * 0.05 + i * 0.5);
                     fill(100, 100, 100, alpha);
                     noStroke();
-                    ellipse(dotX, dotY, 3 * width/800, 3 * width/800);
+                    ellipse(dotX, dotY, 3, 3);
                 }
                 
                 // Subtle movement of central line structure
@@ -247,24 +206,24 @@
                 stroke(0, 0, 0, 60);
                 strokeWeight(0.5);
                 let lineCount = 6;
-                let lineSpacing = 8 * height/800;
-                let lineStartX = width * 0.875;
-                let lineY = height * 0.5;
-                let amplitude = 2 * width/800;
+                let lineSpacing = 8;
+                let lineStartX = 700;
+                let lineY = 400;
+                let amplitude = 2;
                 
                 for (let i = 0; i < lineCount; i++) {
                     let offset = amplitude * sin(frameCount * 0.03 + i * 0.2);
                     line(lineStartX, lineY + i * lineSpacing + offset, 
-                         lineStartX + 80 * width/800, lineY + i * lineSpacing - offset);
+                         lineStartX + 80, lineY + i * lineSpacing - offset);
                 }
                 pop();
             }
             
             // Sound control button
             push();
-            let buttonX = width - 40 * width/800;
-            let buttonY = height - 40 * height/800;
-            let buttonSize = 30 * width/800;
+            let buttonX = width - 40;
+            let buttonY = height - 40;
+            let buttonSize = 30;
 
             // Button background
             noStroke();
@@ -277,83 +236,78 @@
                 fill(60, 60, 60, 140);
                 noStroke();
                 // Speaker base
-                rect(buttonX + 10 * width/800, buttonY + 12 * height/800, 4 * width/800, 6 * height/800);
+                rect(buttonX + 10, buttonY + 12, 4, 6);
                 // Speaker cone
                 beginShape();
-                vertex(buttonX + 10 * width/800, buttonY + 12 * height/800);
-                vertex(buttonX + 16 * width/800, buttonY + 8 * height/800);
-                vertex(buttonX + 16 * width/800, buttonY + 22 * height/800);
-                vertex(buttonX + 10 * width/800, buttonY + 18 * height/800);
+                vertex(buttonX + 10, buttonY + 12);
+                vertex(buttonX + 16, buttonY + 8);
+                vertex(buttonX + 16, buttonY + 22);
+                vertex(buttonX + 10, buttonY + 18);
                 endShape(CLOSE);
                 // Sound waves
                 noFill();
                 stroke(60, 60, 60, 140);
                 strokeWeight(1);
-                arc(buttonX + 18 * width/800, buttonY + 15 * height/800, 6 * width/800, 8 * height/800, -PI/3, PI/3);
-                arc(buttonX + 18 * width/800, buttonY + 15 * height/800, 10 * width/800, 14 * height/800, -PI/3, PI/3);
+                arc(buttonX + 18, buttonY + 15, 6, 8, -PI/3, PI/3);
+                arc(buttonX + 18, buttonY + 15, 10, 14, -PI/3, PI/3);
             } else {
                 // Sound off icon
                 fill(60, 60, 60, 140);
                 noStroke();
                 // Speaker base
-                rect(buttonX + 10 * width/800, buttonY + 12 * height/800, 4 * width/800, 6 * height/800);
+                rect(buttonX + 10, buttonY + 12, 4, 6);
                 // Speaker cone
                 beginShape();
-                vertex(buttonX + 10 * width/800, buttonY + 12 * height/800);
-                vertex(buttonX + 16 * width/800, buttonY + 8 * height/800);
-                vertex(buttonX + 16 * width/800, buttonY + 22 * height/800);
-                vertex(buttonX + 10 * width/800, buttonY + 18 * height/800);
+                vertex(buttonX + 10, buttonY + 12);
+                vertex(buttonX + 16, buttonY + 8);
+                vertex(buttonX + 16, buttonY + 22);
+                vertex(buttonX + 10, buttonY + 18);
                 endShape(CLOSE);
                 // X over the speaker
                 stroke(60, 60, 60, 140);
                 strokeWeight(1.5);
-                line(buttonX + 19 * width/800, buttonY + 10 * height/800, buttonX + 24 * width/800, buttonY + 20 * height/800);
-                line(buttonX + 24 * width/800, buttonY + 10 * height/800, buttonX + 19 * width/800, buttonY + 20 * height/800);
+                line(buttonX + 19, buttonY + 10, buttonX + 24, buttonY + 20);
+                line(buttonX + 24, buttonY + 10, buttonX + 19, buttonY + 20);
             }
             pop();
         }
 
-        function touchStarted() {
-            // Check if any circle was touched
+        function mousePressed() {
+            // Check if any circle was clicked
             for (let circle of circles) {
-                if (circle.contains(touchX || mouseX, touchY || mouseY)) {
+                if (circle.contains(mouseX, mouseY)) {
                     circle.clicked();
                     toggleAnimation();
-                    return false; // Prevent default
+                    return;
                 }
             }
             
-            // Check if sound button was touched
-            let buttonX = width - 40 * width/800;
-            let buttonY = height - 40 * height/800;
-            let buttonSize = 30 * width/800;
+            // Check if sound button was clicked
+            let buttonX = width - 40;
+            let buttonY = height - 40;
+            let buttonSize = 30;
             
-            if ((touchX || mouseX) > buttonX && (touchX || mouseX) < buttonX + buttonSize && 
-                (touchY || mouseY) > buttonY && (touchY || mouseY) < buttonY + buttonSize) {
+            if (mouseX > buttonX && mouseX < buttonX + buttonSize && 
+                mouseY > buttonY && mouseY < buttonY + buttonSize) {
                 
                 soundEnabled = !soundEnabled;
                 
                 if (!soundEnabled && soundPlaying) {
+                    // Fade out and stop sound if it's playing
                     pauseSound.setVolume(0, 1);
                     setTimeout(() => {
                         pauseSound.stop();
                         soundPlaying = false;
                     }, 1000);
                 } else if (soundEnabled && isAnimating && !soundPlaying) {
+                    // Start sound if animation is active
                     pauseSound.loop();
                     pauseSound.setVolume(0);
                     pauseSound.setVolume(1, 1);
                     soundPlaying = true;
                 }
-                return false; // Prevent default
+                return;
             }
-            
-            return false; // Prevent default behavior like scrolling
-        }
-
-        // Keep mousePressed for desktop compatibility
-        function mousePressed() {
-            touchStarted();
         }
 
         function toggleAnimation() {
@@ -395,18 +349,18 @@
             // Loading bar
             stroke(100);
             noFill();
-            rect(width/2 - 100 * width/800, height/2 - 10 * height/800, 200 * width/800, 20 * height/800);
+            rect(width/2 - 100, height/2 - 10, 200, 20);
             
             // Loading progress
             fill(80, 150, 200);
             noStroke();
-            rect(width/2 - 100 * width/800, height/2 - 10 * height/800, (percentLoaded * 2) * width/800, 20 * height/800);
+            rect(width/2 - 100, height/2 - 10, percentLoaded * 2, 20);
             
             // Text
             fill(50);
-            textSize(16 * width/800);
+            textSize(16);
             textAlign(CENTER);
-            text("Loading... " + percentLoaded + "%", width/2, height/2 + 30 * height/800);
+            text("Loading... " + percentLoaded + "%", width/2, height/2 + 30);
         }
 
         // Interactive circle class
@@ -422,7 +376,7 @@
             
             update() {
                 // Check if mouse is over the circle
-                this.hover = dist(touchX || mouseX, touchY || mouseY, this.x, this.y) < this.radius;
+                this.hover = dist(mouseX, mouseY, this.x, this.y) < this.radius;
                 
                 // Grow/shrink effect on hover
                 if (this.hover) {
@@ -512,7 +466,7 @@
                 this.progress = random(0, 1); // Start at random positions
                 this.isAnimating = false;
                 this.speed = random(0.005, 0.02);
-                this.dotSize = random(3, 6) * width/800; // Varied dot sizes
+                this.dotSize = random(3, 6); // Varied dot sizes
             }
             
             update() {
@@ -543,29 +497,6 @@
                 }
             }
         }
-
-        // Try to handle autoplay restrictions on mobile
-        function touchEnded() {
-            // Some browsers require user interaction to play audio
-            if (soundEnabled && isAnimating && !soundPlaying) {
-                // Try to start sound on first interaction
-                pauseSound.loop();
-                pauseSound.setVolume(0);
-                pauseSound.setVolume(1, 1.5);
-                soundPlaying = true;
-            }
-            return false;
-        }
-
-        // Initialize audio on first touch for iOS
-        document.addEventListener('touchstart', function() {
-            // Create and play a silent sound to unlock the audio context
-            if (pauseSound && !pauseSound.isPlaying() && soundEnabled && isAnimating) {
-                pauseSound.setVolume(0);
-                pauseSound.play();
-                pauseSound.stop();
-            }
-        }, {once: true});
     </script>
 </body>
 </html>

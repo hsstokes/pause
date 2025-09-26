@@ -176,6 +176,17 @@
                 for (let y = gridY - gridHeight/2; y <= gridY + gridHeight/2; y += gridSize) {
                     line(gridX - gridWidth/2, y, gridX + gridWidth/2, y);
                 }
+            
+                // Add the animated cross right here - it will be part of the same push/pop context
+                // Animated cross that matches the design
+                stroke(80, 170, 210, 90 + 40 * sin(frameCount * 0.03));
+                strokeWeight(1);
+                let crossX = 400; // Adjust position as needed
+                let crossY = 400; // Adjust position as needed
+                let crossSize = 10 + 2 * sin(frameCount * 0.04);
+                line(crossX - crossSize, crossY, crossX + crossSize, crossY);
+                line(crossX, crossY - crossSize, crossX, crossY + crossSize);
+                
                 pop();
                 
                 // Animated dots for the "END" tag

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pause — collaboration</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #f8f8f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      position: relative;
+      width: 420px;
+      height: 600px;
+      background: #fff url("pause.png") center/contain no-repeat;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.15);
+      animation: breathe 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes breathe {
+      0%,100% {transform: scale(0.6); opacity: 0.2;}
+      50% {transform: scale(1.3); opacity: 0.05;}
+    }
+
+    .line {
+      position: absolute;
+      height: 1px;
+      background: rgba(0,0,0,0.1);
+      animation: appear 4s ease-in-out forwards;
+    }
+    @keyframes appear {
+      0% {opacity: 0;}
+      30% {opacity: 1;}
+      100% {opacity: 0;}
+    }
+
+    .jitter {
+      position: absolute;
+      width: 3px;
+      height: 12px;
+      background: rgba(0,0,0,0.25);
+      animation: jitter 0.2s infinite;
+    }
+    @keyframes jitter {
+      0% {transform: translate(0,0);}
+      25% {transform: translate(1px,-1px);}
+      50% {transform: translate(-1px,1px);}
+      75% {transform: translate(1px,1px);}
+      100% {transform: translate(0,0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card"></div>
+
+  <script>
+    const card=document.getElementById('card');
+
+    // circles = breathing pauses
+    function addCircle(){
+      const c=document.createElement('div');
+      c.className='circle';
+      let s=20+Math.random()*50;
+      c.style.width=s+'px';
+      c.style.height=s+'px';
+      c.style.left=Math.random()*card.clientWidth+'px';
+      c.style.top=Math.random()*card.clientHeight+'px';
+      card.appendChild(c);
+      setTimeout(()=>c.remove(),6000);
+    }
+    setInterval(addCircle,4000);
+
+    // horizontal lines = suspended silence
+    function addLine(){
+      const l=document.createElement('div');
+      l.className='line';
+      l.style.width=(80+Math.random()*200)+'px';
+      l.style.left=Math.random()*card.clientWidth+'px';
+      l.style.top=Math.random()*card.clientHeight+'px';
+      card.appendChild(l);
+      setTimeout(()=>l.remove(),4000);
+    }
+    setInterval(addLine,3000);
+
+    // jitter = sudden break
+    function addJitter(){
+      const j=document.createElement('div');
+      j.className='jitter';
+      j.style.left=Math.random()*card.clientWidth+'px';
+      j.style.top=Math.random()*card.clientHeight+'px';
+      card.appendChild(j);
+      setTimeout(()=>j.remove(),1200);
+    }
+    setInterval(addJitter,5000);
+  </script>
+</body>
+</html>

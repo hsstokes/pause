@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Interactive Pause</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
@@ -16,10 +16,13 @@
             height: 100vh;
             background-color: #f5f5f5;
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
         
         canvas {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            max-height: 100vh;
+            object-fit: contain;
         }
         
         .info {
@@ -50,6 +53,10 @@
         let pauseSound;
         let soundPlaying = false;
         let soundEnabled = true;
+        
+        // Canvas sizing variables
+        let canvasWidth, canvasHeight;
+        let scaleFactor = 1;
 
         function preload() {
             pauseImage = loadImage('pause.png');
@@ -57,25 +64,35 @@
         }
 
         function setup() {
-             // Create canvas with proper aspect ratio
+            // Create canvas that fits the screen while maintaining aspect ratio
             let aspectRatio = pauseImage.width / pauseImage.height;
-  
-            // Set a fixed width and calculate height based on aspect ratio
-            let canvasWidth = 800;
-            let canvasHeight = canvasWidth / aspectRatio;
+            
+            if (windowWidth / windowHeight > aspectRatio) {
+                // Screen is wider than image aspect ratio
+                canvasHeight = windowHeight;
+                canvasWidth = canvasHeight * aspectRatio;
+            } else {
+                // Screen is taller than image aspect ratio
+                canvasWidth = windowWidth;
+                canvasHeight = canvasWidth / aspectRatio;
+            }
+            
             createCanvas(canvasWidth, canvasHeight);
             
-            // Create interactive circles at key points
-            circles.push(new InteractiveCircle(150, 150, 40, 'blue')); // Blue grid area
-            circles.push(new InteractiveCircle(475, 200, 30, 'black')); // Center lines
-            circles.push(new InteractiveCircle(350, 500, 25, 'tag')); // END tag area
+            // Calculate scale factor based on our reference size of 800px width
+            scaleFactor = canvasWidth / 800;
+            
+            // Create interactive circles at key points, scaled to match canvas size
+            circles.push(new InteractiveCircle(150 * scaleFactor, 150 * scaleFactor, 40 * scaleFactor, 'blue')); // Blue grid area
+            circles.push(new InteractiveCircle(475 * scaleFactor, 200 * scaleFactor, 30 * scaleFactor, 'black')); // Center lines
+            circles.push(new InteractiveCircle(350 * scaleFactor, 500 * scaleFactor, 25 * scaleFactor, 'tag')); // END tag area
             
             // Create interactive lines that follow the exact diagonal pattern in the image
-            let lineStartX = 385;
-            let lineStartY = 392;
-            let lineEndX = 560;
-            let lineEndY = 392;
-            let lineSpacing = 8;
+            let lineStartX = 385 * scaleFactor;
+            let lineStartY = 392 * scaleFactor;
+            let lineEndX = 560 * scaleFactor;
+            let lineEndY = 392 * scaleFactor;
+            let lineSpacing = 8 * scaleFactor;
             
             for (let i = 0; i < 10; i++) {
                 let y = lineStartY - i * lineSpacing;
@@ -88,13 +105,60 @@
                 if (percentLoaded >= 100) {
                     clearInterval(loadInterval);
                     isAnimating = true;
+                    
+                    // Set all lines to animate
+                    for (let line of lines) {
+                        line.isAnimating = true;
+                    }
                 }
             }, 30);
+            
+            console.log("Canvas size:", canvasWidth, "x", canvasHeight, "Scale factor:", scaleFactor);
+        }
+
+        function windowResized() {
+            // Recalculate canvas size on window resize
+            let aspectRatio = pauseImage.width / pauseImage.height;
+            
+            if (windowWidth / windowHeight > aspectRatio) {
+                canvasHeight = windowHeight;
+                canvasWidth = canvasHeight * aspectRatio;
+            } else {
+                canvasWidth = windowWidth;
+                canvasHeight = canvasWidth / aspectRatio;
+            }
+            
+            resizeCanvas(canvasWidth, canvasHeight);
+            
+            // Recalculate scale factor
+            scaleFactor = canvasWidth / 800;
+            
+            // Recreate all interactive elements with new scale
+            circles = [];
+            lines = [];
+            
+            circles.push(new InteractiveCircle(150 * scaleFactor, 150 * scaleFactor, 40 * scaleFactor, 'blue'));
+            circles.push(new InteractiveCircle(475 * scaleFactor, 200 * scaleFactor, 30 * scaleFactor, 'black'));
+            circles.push(new InteractiveCircle(350 * scaleFactor, 500 * scaleFactor, 25 * scaleFactor, 'tag'));
+            
+            let lineStartX = 385 * scaleFactor;
+            let lineStartY = 392 * scaleFactor;
+            let lineEndX = 560 * scaleFactor;
+            let lineEndY = 392 * scaleFactor;
+            let lineSpacing = 8 * scaleFactor;
+            
+            for (let i = 0; i < 10; i++) {
+                let y = lineStartY - i * lineSpacing;
+                lines.push(new AnimatedLine(lineStartX, y, lineEndX, y));
+                lines[i].isAnimating = isAnimating;
+            }
+            
+            console.log("Resized canvas:", canvasWidth, "x", canvasHeight, "Scale factor:", scaleFactor);
         }
 
         function draw() {
-            // Display the background image
-            image(pauseImage, 0, 0, width, height);
+            // Display the background image to fill the canvas
+            image(pauseImage, 0, 0, canvasWidth, canvasHeight);
             
             // If still loading, show progress
             if (percentLoaded < 100) {
@@ -116,28 +180,28 @@
             // Add indicators based on animation state
             if (isAnimating) {
                 // Subtle play indicator that fits with the % symbol area
-                textSize(9);
+                textSize(9 * scaleFactor);
                 textFont('Orator Std');
                 textAlign(CENTER);
                 fill(80, 80, 80, 110);
-                text("P L A Y", 780, 344);
+                text("P L A Y", 780 * scaleFactor, 344 * scaleFactor);
                 
                 // Add a subtle underline
                 stroke(80, 80, 80, 60);
-                strokeWeight(0.5);
-                line(765, 347, 795, 347);
+                strokeWeight(0.5 * scaleFactor);
+                line(765 * scaleFactor, 347 * scaleFactor, 795 * scaleFactor, 347 * scaleFactor);
               
                 // Add a subtle progress indicator on the END tag
                 noFill();
                 stroke(120, 120, 120, 100);
-                strokeWeight(0.5);
-                let progressWidth = 30;
-                rect(350, 500 + 15, progressWidth, 3);
+                strokeWeight(0.5 * scaleFactor);
+                let progressWidth = 30 * scaleFactor;
+                rect(350 * scaleFactor, (500 + 15) * scaleFactor, progressWidth, 3 * scaleFactor);
                 fill(120, 120, 120, 100);
-                rect(350, 500 + 15, progressWidth * (frameCount % 100)/100, 3);
+                rect(350 * scaleFactor, (500 + 15) * scaleFactor, progressWidth * (frameCount % 100)/100, 3 * scaleFactor);
             } else {
                 // Typewriter effect for PAUSE
-                textSize(9);
+                textSize(9 * scaleFactor);
                 textFont('Orator Std');
                 textAlign(CENTER);
                 fill(80, 80, 80, 110);
@@ -151,28 +215,28 @@
                         pauseTextTimer = 0;
                     }
                 }
-                text(pauseText, 780, 344);
+                text(pauseText, 780 * scaleFactor, 344 * scaleFactor);
             }
 
             // Animated ring around the purple circle
-            let circleX = 600; 
-            let circleY = 640; 
-            let circleRadius = 30;
+            let circleX = 600 * scaleFactor; 
+            let circleY = 640 * scaleFactor; 
+            let circleRadius = 30 * scaleFactor;
             noFill();
             stroke(60, 30, 80, 70 + 30 * sin(frameCount * 0.05));
-            strokeWeight(1);
-            ellipse(circleX, circleY, circleRadius * 2 + 5 + 3 * sin(frameCount * 0.05));
+            strokeWeight(1 * scaleFactor);
+            ellipse(circleX, circleY, circleRadius * 2 + 5 * scaleFactor + 3 * scaleFactor * sin(frameCount * 0.05));
             
             // Subtle grid animation in blue area
             if (isAnimating) {
                 push();
                 stroke(255, 255, 255, 20 + 10 * sin(frameCount * 0.02));
-                strokeWeight(0.3);
-                let gridSize = 15;
-                let gridX = 150; // Blue grid area center
-                let gridY = 150;
-                let gridWidth = 100;
-                let gridHeight = 100;
+                strokeWeight(0.3 * scaleFactor);
+                let gridSize = 15 * scaleFactor;
+                let gridX = 150 * scaleFactor; // Blue grid area center
+                let gridY = 150 * scaleFactor;
+                let gridWidth = 100 * scaleFactor;
+                let gridHeight = 100 * scaleFactor;
                 for (let x = gridX - gridWidth/2; x <= gridX + gridWidth/2; x += gridSize) {
                     line(x, gridY - gridHeight/2, x, gridY + gridHeight/2);
                 }
@@ -182,10 +246,10 @@
             
                 // Animated cross that matches the design
                 stroke(80, 170, 210, 90 + 40 * sin(frameCount * 0.03));
-                strokeWeight(1);
-                let crossX = 400; 
-                let crossY = 400; 
-                let crossSize = 10 + 2 * sin(frameCount * 0.04);
+                strokeWeight(1 * scaleFactor);
+                let crossX = 400 * scaleFactor; 
+                let crossY = 400 * scaleFactor; 
+                let crossSize = (10 + 2 * sin(frameCount * 0.04)) * scaleFactor;
                 line(crossX - crossSize, crossY, crossX + crossSize, crossY);
                 line(crossX, crossY - crossSize, crossX, crossY + crossSize);
                 
@@ -193,42 +257,42 @@
                 
                 // Animated dots for the "END" tag
                 for (let i = 0; i < 3; i++) {
-                    let dotX = 350 + i * 15;
-                    let dotY = 735;
+                    let dotX = 350 * scaleFactor + i * 15 * scaleFactor;
+                    let dotY = 735 * scaleFactor;
                     let alpha = 80 + 70 * sin(frameCount * 0.05 + i * 0.5);
                     fill(100, 100, 100, alpha);
                     noStroke();
-                    ellipse(dotX, dotY, 3, 3);
+                    ellipse(dotX, dotY, 3 * scaleFactor, 3 * scaleFactor);
                 }
                 
                 // Subtle movement of central line structure
                 push();
                 stroke(0, 0, 0, 60);
-                strokeWeight(0.5);
+                strokeWeight(0.5 * scaleFactor);
                 let lineCount = 6;
-                let lineSpacing = 8;
-                let lineStartX = 700;
-                let lineY = 400;
-                let amplitude = 2;
+                let lineSpacing = 8 * scaleFactor;
+                let lineStartX = 700 * scaleFactor;
+                let lineY = 400 * scaleFactor;
+                let amplitude = 2 * scaleFactor;
                 
                 for (let i = 0; i < lineCount; i++) {
                     let offset = amplitude * sin(frameCount * 0.03 + i * 0.2);
                     line(lineStartX, lineY + i * lineSpacing + offset, 
-                         lineStartX + 80, lineY + i * lineSpacing - offset);
+                         lineStartX + 80 * scaleFactor, lineY + i * lineSpacing - offset);
                 }
                 pop();
             }
             
             // Sound control button
             push();
-            let buttonX = width - 40;
-            let buttonY = height - 40;
-            let buttonSize = 30;
+            let buttonX = width - 40 * scaleFactor;
+            let buttonY = height - 40 * scaleFactor;
+            let buttonSize = 30 * scaleFactor;
 
             // Button background
             noStroke();
             fill(0, 0, 0, 30);
-            rect(buttonX, buttonY, buttonSize, buttonSize, 5);
+            rect(buttonX, buttonY, buttonSize, buttonSize, 5 * scaleFactor);
 
             // Sound icon
             if (soundEnabled) {
@@ -236,60 +300,64 @@
                 fill(60, 60, 60, 140);
                 noStroke();
                 // Speaker base
-                rect(buttonX + 10, buttonY + 12, 4, 6);
+                rect(buttonX + 10 * scaleFactor, buttonY + 12 * scaleFactor, 4 * scaleFactor, 6 * scaleFactor);
                 // Speaker cone
                 beginShape();
-                vertex(buttonX + 10, buttonY + 12);
-                vertex(buttonX + 16, buttonY + 8);
-                vertex(buttonX + 16, buttonY + 22);
-                vertex(buttonX + 10, buttonY + 18);
+                vertex(buttonX + 10 * scaleFactor, buttonY + 12 * scaleFactor);
+                vertex(buttonX + 16 * scaleFactor, buttonY + 8 * scaleFactor);
+                vertex(buttonX + 16 * scaleFactor, buttonY + 22 * scaleFactor);
+                vertex(buttonX + 10 * scaleFactor, buttonY + 18 * scaleFactor);
                 endShape(CLOSE);
                 // Sound waves
                 noFill();
                 stroke(60, 60, 60, 140);
-                strokeWeight(1);
-                arc(buttonX + 18, buttonY + 15, 6, 8, -PI/3, PI/3);
-                arc(buttonX + 18, buttonY + 15, 10, 14, -PI/3, PI/3);
+                strokeWeight(1 * scaleFactor);
+                arc(buttonX + 18 * scaleFactor, buttonY + 15 * scaleFactor, 6 * scaleFactor, 8 * scaleFactor, -PI/3, PI/3);
+                arc(buttonX + 18 * scaleFactor, buttonY + 15 * scaleFactor, 10 * scaleFactor, 14 * scaleFactor, -PI/3, PI/3);
             } else {
                 // Sound off icon
                 fill(60, 60, 60, 140);
                 noStroke();
                 // Speaker base
-                rect(buttonX + 10, buttonY + 12, 4, 6);
+                rect(buttonX + 10 * scaleFactor, buttonY + 12 * scaleFactor, 4 * scaleFactor, 6 * scaleFactor);
                 // Speaker cone
                 beginShape();
-                vertex(buttonX + 10, buttonY + 12);
-                vertex(buttonX + 16, buttonY + 8);
-                vertex(buttonX + 16, buttonY + 22);
-                vertex(buttonX + 10, buttonY + 18);
+                vertex(buttonX + 10 * scaleFactor, buttonY + 12 * scaleFactor);
+                vertex(buttonX + 16 * scaleFactor, buttonY + 8 * scaleFactor);
+                vertex(buttonX + 16 * scaleFactor, buttonY + 22 * scaleFactor);
+                vertex(buttonX + 10 * scaleFactor, buttonY + 18 * scaleFactor);
                 endShape(CLOSE);
                 // X over the speaker
                 stroke(60, 60, 60, 140);
-                strokeWeight(1.5);
-                line(buttonX + 19, buttonY + 10, buttonX + 24, buttonY + 20);
-                line(buttonX + 24, buttonY + 10, buttonX + 19, buttonY + 20);
+                strokeWeight(1.5 * scaleFactor);
+                line(buttonX + 19 * scaleFactor, buttonY + 10 * scaleFactor, buttonX + 24 * scaleFactor, buttonY + 20 * scaleFactor);
+                line(buttonX + 24 * scaleFactor, buttonY + 10 * scaleFactor, buttonX + 19 * scaleFactor, buttonY + 20 * scaleFactor);
             }
             pop();
         }
 
         function mousePressed() {
+            console.log("Mouse pressed at:", mouseX, mouseY);
+            
             // Check if any circle was clicked
             for (let circle of circles) {
                 if (circle.contains(mouseX, mouseY)) {
+                    console.log("Circle clicked!");
                     circle.clicked();
                     toggleAnimation();
-                    return;
+                    return false;
                 }
             }
             
             // Check if sound button was clicked
-            let buttonX = width - 40;
-            let buttonY = height - 40;
-            let buttonSize = 30;
+            let buttonX = width - 40 * scaleFactor;
+            let buttonY = height - 40 * scaleFactor;
+            let buttonSize = 30 * scaleFactor;
             
             if (mouseX > buttonX && mouseX < buttonX + buttonSize && 
                 mouseY > buttonY && mouseY < buttonY + buttonSize) {
                 
+                console.log("Sound button clicked!");
                 soundEnabled = !soundEnabled;
                 
                 if (!soundEnabled && soundPlaying) {
@@ -306,12 +374,21 @@
                     pauseSound.setVolume(1, 1);
                     soundPlaying = true;
                 }
-                return;
+                return false;
             }
+            
+            return false;
+        }
+
+        // Support touch events
+        function touchStarted() {
+            return mousePressed();
         }
 
         function toggleAnimation() {
+            console.log("Toggling animation from:", isAnimating, "to:", !isAnimating);
             isAnimating = !isAnimating;
+            
             // Toggle animation state for all elements
             for (let line of lines) {
                 line.isAnimating = isAnimating;
@@ -323,10 +400,14 @@
 
                 // Start playing sound if it's enabled
                 if (soundEnabled && !soundPlaying) {
-                    pauseSound.loop();
-                    pauseSound.setVolume(0);
-                    pauseSound.setVolume(1, 1.5); // Fade in over 1.5 seconds
-                    soundPlaying = true;
+                    try {
+                        pauseSound.loop();
+                        pauseSound.setVolume(0);
+                        pauseSound.setVolume(1, 1.5); // Fade in over 1.5 seconds
+                        soundPlaying = true;
+                    } catch(e) {
+                        console.log("Audio error:", e);
+                    }
                 }
             } else {
                 // Fade out sound when pausing
@@ -349,18 +430,18 @@
             // Loading bar
             stroke(100);
             noFill();
-            rect(width/2 - 100, height/2 - 10, 200, 20);
+            rect(width/2 - 100 * scaleFactor, height/2 - 10 * scaleFactor, 200 * scaleFactor, 20 * scaleFactor);
             
             // Loading progress
             fill(80, 150, 200);
             noStroke();
-            rect(width/2 - 100, height/2 - 10, percentLoaded * 2, 20);
+            rect(width/2 - 100 * scaleFactor, height/2 - 10 * scaleFactor, (percentLoaded * 2) * scaleFactor, 20 * scaleFactor);
             
             // Text
             fill(50);
-            textSize(16);
+            textSize(16 * scaleFactor);
             textAlign(CENTER);
-            text("Loading... " + percentLoaded + "%", width/2, height/2 + 30);
+            text("Loading... " + percentLoaded + "%", width/2, height/2 + 30 * scaleFactor);
         }
 
         // Interactive circle class
@@ -396,7 +477,7 @@
                   ellipse(this.x, this.y, this.radius * 2);
                   if (this.hover) {
                     stroke(255);
-                    strokeWeight(1);
+                    strokeWeight(1 * scaleFactor);
                     noFill();
                     ellipse(this.x, this.y, this.radius * 2.2);
                   }
@@ -405,22 +486,22 @@
                    // END tag area style
                    noFill();
                    stroke(100, 100, 100, this.hover ? 180 : 120);
-                   strokeWeight(1.5);
-                   rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3);
+                   strokeWeight(1.5 * scaleFactor);
+                   rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3 * scaleFactor);
                    if (this.hover) {
                       fill(220, 220, 220, 120);
-                      rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3);
+                      rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3 * scaleFactor);
                    }
                   }
                   else {
                     // Center lines area style - make a small line segment instead of a circle
                     stroke(0, 0, 0, this.hover ? 180 : 120);
-                    strokeWeight(2);
+                    strokeWeight(2 * scaleFactor);
                     line(this.x - this.radius, this.y, this.x + this.radius, this.y);
       
                      if (this.hover) {
                         noFill();
-                        strokeWeight(1);
+                        strokeWeight(1 * scaleFactor);
                         ellipse(this.x, this.y, this.radius * 2);
                      }
                     }
@@ -466,7 +547,7 @@
                 this.progress = random(0, 1); // Start at random positions
                 this.isAnimating = false;
                 this.speed = random(0.005, 0.02);
-                this.dotSize = random(3, 6); // Varied dot sizes
+                this.dotSize = random(3, 6) * scaleFactor; // Varied dot sizes
             }
             
             update() {
@@ -480,7 +561,7 @@
             
             display() {
                 stroke(0, 0, 0, 100);
-                strokeWeight(0.8);
+                strokeWeight(0.8 * scaleFactor);
 
                 // Draw the line
                 line(this.x1, this.y1, this.x2, this.y2);
@@ -497,6 +578,21 @@
                 }
             }
         }
+
+        // For iOS/Safari, try to enable audio on first interaction
+        document.addEventListener('touchstart', function() {
+            if (pauseSound && soundEnabled && !soundPlaying && isAnimating) {
+                // Try to start sound on first interaction for iOS
+                try {
+                    pauseSound.loop();
+                    pauseSound.setVolume(0);
+                    pauseSound.setVolume(1, 1.5);
+                    soundPlaying = true;
+                } catch(e) {
+                    console.log("Couldn't autoplay audio:", e);
+                }
+            }
+        }, {once: true});
     </script>
 </body>
 </html>

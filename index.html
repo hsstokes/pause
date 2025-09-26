@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Pause</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -41,9 +42,15 @@
         let percentLoaded = 0;
         let pauseText = "";
         let pauseTextTimer = 0;
+        
+        // Add these new sound-related variables
+        let pauseSound;
+        let soundPlaying = false;
+        let soundEnabled = true;  // Whether sound is enabled globally
 
         function preload() {
             pauseImage = loadImage('pause.png');
+            pauseSound = loadSound('pause_ambient.mp3');
         }
 
         function setup() {
@@ -128,7 +135,7 @@
             } else {
                 // Typewriter effect for PAUSE
                 textSize(9);
-                textFont('Courier New');
+                textFont('Orator Std');
                 textAlign(CENTER);
                 fill(80, 80, 80, 110);
                 
@@ -198,6 +205,58 @@
                 }
                 pop();
             }
+            
+            // Sound control button
+            push();
+            let buttonX = width - 40;
+            let buttonY = height - 40;
+            let buttonSize = 30;
+
+            // Button background
+            noStroke();
+            fill(0, 0, 0, 30);
+            rect(buttonX, buttonY, buttonSize, buttonSize, 5);
+
+            // Sound icon
+            if (soundEnabled) {
+                // Sound on icon
+                fill(60, 60, 60, 140);
+                noStroke();
+                // Speaker base
+                rect(buttonX + 10, buttonY + 12, 4, 6);
+                // Speaker cone
+                beginShape();
+                vertex(buttonX + 10, buttonY + 12);
+                vertex(buttonX + 16, buttonY + 8);
+                vertex(buttonX + 16, buttonY + 22);
+                vertex(buttonX + 10, buttonY + 18);
+                endShape(CLOSE);
+                // Sound waves
+                noFill();
+                stroke(60, 60, 60, 140);
+                strokeWeight(1);
+                arc(buttonX + 18, buttonY + 15, 6, 8, -PI/3, PI/3);
+                arc(buttonX + 18, buttonY + 15, 10, 14, -PI/3, PI/3);
+            } else {
+                // Sound off icon
+                fill(60, 60, 60, 140);
+                noStroke();
+                // Speaker base
+                rect(buttonX + 10, buttonY + 12, 4, 6);
+                // Speaker cone
+                beginShape();
+                vertex(buttonX + 10, buttonY + 12);
+                vertex(buttonX + 16, buttonY + 8);
+                vertex(buttonX + 16, buttonY + 22);
+                vertex(buttonX + 10, buttonY + 18);
+                endShape(CLOSE);
+                // X over the speaker
+                stroke(60, 60, 60, 140);
+                strokeWeight(1.5);
+                line(buttonX + 19, buttonY + 10, buttonX + 24, buttonY + 20);
+                line(buttonX + 24, buttonY + 10, buttonX + 19, buttonY + 20);
+            }
+            pop();
         }
 
         function mousePressed() {
@@ -208,6 +267,33 @@
                     toggleAnimation();
                     return;
                 }
+            }
+            
+            // Check if sound button was clicked
+            let buttonX = width - 40;
+            let buttonY = height - 40;
+            let buttonSize = 30;
+            
+            if (mouseX > buttonX && mouseX < buttonX + buttonSize && 
+                mouseY > buttonY && mouseY < buttonY + buttonSize) {
+                
+                soundEnabled = !soundEnabled;
+                
+                if (!soundEnabled && soundPlaying) {
+                    // Fade out and stop sound if it's playing
+                    pauseSound.setVolume(0, 1);
+                    setTimeout(() => {
+                        pauseSound.stop();
+                        soundPlaying = false;
+                    }, 1000);
+                } else if (soundEnabled && isAnimating && !soundPlaying) {
+                    // Start sound if animation is active
+                    pauseSound.loop();
+                    pauseSound.setVolume(0);
+                    pauseSound.setVolume(1, 1);
+                    soundPlaying = true;
+                }
+                return;
             }
         }
 
@@ -221,6 +307,23 @@
             // Reset typewriter effect when starting animation
             if (isAnimating) {
                 pauseText = "";
+
+                // Start playing sound if it's enabled
+                if (soundEnabled && !soundPlaying) {
+                    pauseSound.loop();
+                    pauseSound.setVolume(0);
+                    pauseSound.setVolume(1, 1.5); // Fade in over 1.5 seconds
+                    soundPlaying = true;
+                }
+            } else {
+                // Fade out sound when pausing
+                if (soundPlaying && soundEnabled) {
+                    pauseSound.setVolume(0, 1.5); // Fade out over 1.5 seconds
+                    setTimeout(() => {
+                        pauseSound.stop();
+                        soundPlaying = false;
+                    }, 1500);
+                }
             }
         }
 

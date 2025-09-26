@@ -1,89 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pause — fermata version</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .card {
-      position: relative;
-      width: 420px;
-      height: 600px;
-      background: #fff url("pause.png") center/contain no-repeat;
-      border: 1px solid #ccc;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      overflow: hidden;
-    }
-
-    /* black circle breathing */
-    .pulse {
-      position: absolute;
-      left: 210px; top: 430px; /* approximate anchor */
-      width: 60px; height: 60px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.2);
-      transform: translate(-50%,-50%);
-      animation: breathe 8s ease-in-out infinite;
-      mix-blend-mode: multiply;
-      pointer-events: none;
-    }
-    @keyframes breathe {
-      0%,100% {transform: translate(-50%,-50%) scale(0.9); opacity: 0.25;}
-      50% {transform: translate(-50%,-50%) scale(1.15); opacity: 0.05;}
-    }
-
-    /* subtle shimmering lines */
-    .fan-line {
-      position: absolute;
-      left: 210px; top: 280px; /* approximate fan anchor */
-      width: 160px; height: 1px;
-      background: rgba(0,0,0,0.12);
-      transform-origin: left center;
-      animation: shimmer 3s ease-in-out infinite alternate;
-      pointer-events: none;
-    }
-    @keyframes shimmer {
-      from {transform: rotate(0deg);}
-      to {transform: rotate(0.8deg);}
-    }
-
-    /* gently swaying END tag */
-    .tag {
-      position: absolute;
-      left: 200px; top: 520px;
-      width: 100px; height: 40px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 4px;
-      transform-origin: top left;
-      animation: sway 6s ease-in-out infinite alternate;
-      pointer-events: none;
-    }
-    @keyframes sway {
-      from {transform: rotate(-3deg);}
-      to {transform: rotate(3deg);}
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Pause</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        
+        canvas {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <!-- anchored animations -->
-    <div class="pulse"></div>
+    <div class="info">Click on the circles to toggle animation</div>
+    
+    <script>
+        let pauseImage;
+        let circles = [];
+        let lines = [];
+        let isAnimating = false;
+        let percentLoaded = 0;
 
-    <!-- three shimmering fan lines -->
-    <div class="fan-line" style="top:300px;"></div>
-    <div class="fan-line" style="top:320px;"></div>
-    <div class="fan-line" style="top:340px;"></div>
+        function preload() {
+            pauseImage = loadImage('pause.jpg');
+        }
 
-    <!-- ghosted tag sway (overlay matches your tag) -->
-    <div class="tag"></div>
-  </div>
+        function setup() {
+            createCanvas(800, 600);
+            
+            // Create interactive circles at key points
+            circles.push(new InteractiveCircle(150, 150, 40, color(255, 255, 255, 180))); // Blue grid area
+            circles.push(new InteractiveCircle(475, 200, 30, color(200, 200, 200, 180))); // Center lines
+            circles.push(new InteractiveCircle(350, 500, 25, color(100, 100, 100, 180))); // END tag area
+            
+            // Create interactive lines that follow the diagonal pattern
+            for (let i = 0; i < 8; i++) {
+                lines.push(new AnimatedLine(350, 200 + i*15, 500, 200 + i*15));
+            }
+            
+            // Loading animation
+            let loadInterval = setInterval(() => {
+                percentLoaded += 1;
+                if (percentLoaded >= 100) {
+                    clearInterval(loadInterval);
+                    isAnimating = true;
+                }
+            }, 30);
+        }
+
+        function draw() {
+            // Display the background image
+            image(pauseImage, 0, 0, width, height);
+            
+            // If still loading, show progress
+            if (percentLoaded < 100) {
+                drawLoadingIndicator();
+                return;
+            }
+            
+            // Draw and update interactive elements
+            for (let circle of circles) {
+                circle.update();
+                circle.display();
+            }
+            
+            for (let line of lines) {
+                line.update();
+                line.display();
+            }
+            
+            // Add a subtle % indicator in the top corner where the "%" sign is in the image
+            textSize(14);
+            fill(80, 80, 80, 150);
+            text(isAnimating ? "PLAY" : "PAUSE", 478, 78);
+        }
+
+        function mousePressed() {
+            // Check if any circle was clicked
+            for (let circle of circles) {
+                if (circle.contains(mouseX, mouseY)) {
+                    circle.clicked();
+                    toggleAnimation();
+                    return;
+                }
+            }
+        }
+
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            // Toggle animation state for all elements
+            for (let line of lines) {
+                line.isAnimating = isAnimating;
+            }
+        }
+
+        function drawLoadingIndicator() {
+            // Semi-transparent overlay
+            fill(255, 255, 255, 150);
+            noStroke();
+            rect(0, 0, width, height);
+            
+            // Loading bar
+            stroke(100);
+            noFill();
+            rect(width/2 - 100, height/2 - 10, 200, 20);
+            
+            // Loading progress
+            fill(80, 150, 200);
+            noStroke();
+            rect(width/2 - 100, height/2 - 10, percentLoaded * 2, 20);
+            
+            // Text
+            fill(50);
+            textSize(16);
+            textAlign(CENTER);
+            text("Loading... " + percentLoaded + "%", width/2, height/2 + 30);
+        }
+
+        // Interactive circle class
+        class InteractiveCircle {
+            constructor(x, y, radius, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.color = color;
+                this.originalRadius = radius;
+                this.hover = false;
+            }
+            
+            update() {
+                // Check if mouse is over the circle
+                this.hover = dist(mouseX, mouseY, this.x, this.y) < this.radius;
+                
+                // Grow/shrink effect on hover
+                if (this.hover) {
+                    this.radius = lerp(this.radius, this.originalRadius * 1.2, 0.1);
+                } else {
+                    this.radius = lerp(this.radius, this.originalRadius, 0.1);
+                }
+            }
+            
+            display() {
+                noStroke();
+                fill(this.color);
+                ellipse(this.x, this.y, this.radius * 2);
+                
+                if (this.hover) {
+                    fill(50, 50, 50, 150);
+                    textAlign(CENTER, CENTER);
+                    textSize(12);
+                    text(isAnimating ? "PAUSE" : "PLAY", this.x, this.y);
+                }
+            }
+            
+            contains(px, py) {
+                return dist(px, py, this.x, this.y) < this.radius;
+            }
+            
+            clicked() {
+                // Animation when clicked
+                this.radius = this.originalRadius * 1.5;
+            }
+        }
+
+        // Animated line class
+        class AnimatedLine {
+            constructor(x1, y1, x2, y2) {
+                this.x1 = x1;
+                this.y1 = y1;
+                this.x2 = x2;
+                this.y2 = y2;
+                this.progress = 0;
+                this.isAnimating = false;
+                this.speed = random(0.005, 0.02);
+            }
+            
+            update() {
+                if (this.isAnimating) {
+                    this.progress += this.speed;
+                    if (this.progress > 1) {
+                        this.progress = 0;
+                    }
+                }
+            }
+            
+            display() {
+                stroke(0, 0, 0, 150);
+                strokeWeight(1);
+                
+                if (this.isAnimating) {
+                    // Animate a dot moving along the line
+                    let px = lerp(this.x1, this.x2, this.progress);
+                    let py = lerp(this.y1, this.y2, this.progress);
+                    
+                    line(this.x1, this.y1, this.x2, this.y2);
+                    fill(0);
+                    noStroke();
+                    ellipse(px, py, 5, 5);
+                } else {
+                    // When paused, just show static line
+                    line(this.x1, this.y1, this.x2, this.y2);
+                }
+            }
+        }
+    </script>
 </body>
 </html>

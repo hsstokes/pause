@@ -44,7 +44,7 @@
         let pauseImage;
         let circles = [];
         let lines = [];
-        let isAnimating = false;
+        let isAnimating = false; // Start paused
         let percentLoaded = 0;
         let pauseText = "";
         let pauseTextTimer = 0;
@@ -53,6 +53,7 @@
         let pauseSound;
         let soundPlaying = false;
         let soundEnabled = true;
+        let soundLoaded = false;
         
         // Canvas sizing variables
         let canvasWidth, canvasHeight;
@@ -60,7 +61,21 @@
 
         function preload() {
             pauseImage = loadImage('pause.png');
-            pauseSound = loadSound('pause_ambient.mp3');
+            
+            // Load sound but don't play it yet
+            soundLoaded = false;
+            pauseSound = loadSound('pause_ambient.mp3', 
+                // Success callback
+                function() {
+                    console.log("Sound loaded successfully");
+                    soundLoaded = true;
+                },
+                // Error callback
+                function(err) {
+                    console.error("Error loading sound:", err);
+                    soundEnabled = false;
+                }
+            );
         }
 
         function setup() {
@@ -104,12 +119,8 @@
                 percentLoaded += 1;
                 if (percentLoaded >= 100) {
                     clearInterval(loadInterval);
-                    isAnimating = true;
-                    
-                    // Set all lines to animate
-                    for (let line of lines) {
-                        line.isAnimating = true;
-                    }
+                    // Start in paused state!
+                    isAnimating = false;
                 }
             }, 30);
             
@@ -180,31 +191,31 @@
             // Add indicators based on animation state
             if (isAnimating) {
                 // Subtle play indicator that fits with the % symbol area
-                textSize(9 * scaleFactor);
+                textSize(11 * scaleFactor);
                 textFont('Orator Std');
                 textAlign(CENTER);
-                fill(80, 80, 80, 110);
+                fill(80, 80, 80, 200);  // Increased opacity
                 text("P L A Y", 780 * scaleFactor, 344 * scaleFactor);
                 
-                // Add a subtle underline
-                stroke(80, 80, 80, 60);
-                strokeWeight(0.5 * scaleFactor);
+                // Add a more visible underline
+                stroke(80, 80, 80, 150);  // Increased opacity
+                strokeWeight(1 * scaleFactor);  // Increased thickness
                 line(765 * scaleFactor, 347 * scaleFactor, 795 * scaleFactor, 347 * scaleFactor);
               
-                // Add a subtle progress indicator on the END tag
+                // Add a more visible progress indicator on the END tag
                 noFill();
-                stroke(120, 120, 120, 100);
-                strokeWeight(0.5 * scaleFactor);
+                stroke(120, 120, 120, 180);  // Increased opacity
+                strokeWeight(1.5 * scaleFactor);  // Increased thickness
                 let progressWidth = 30 * scaleFactor;
                 rect(350 * scaleFactor, (500 + 15) * scaleFactor, progressWidth, 3 * scaleFactor);
-                fill(120, 120, 120, 100);
+                fill(120, 120, 120, 180);  // Increased opacity
                 rect(350 * scaleFactor, (500 + 15) * scaleFactor, progressWidth * (frameCount % 100)/100, 3 * scaleFactor);
             } else {
                 // Typewriter effect for PAUSE
-                textSize(9 * scaleFactor);
+                textSize(11 * scaleFactor);  // Increased size
                 textFont('Orator Std');
                 textAlign(CENTER);
-                fill(80, 80, 80, 110);
+                fill(80, 80, 80, 200);  // Increased opacity
                 
                 // Typewriter effect
                 if (pauseTextTimer < 5) {
@@ -218,20 +229,20 @@
                 text(pauseText, 780 * scaleFactor, 344 * scaleFactor);
             }
 
-            // Animated ring around the purple circle
+            // Animated ring around the purple circle - MUCH MORE VISIBLE
             let circleX = 600 * scaleFactor; 
             let circleY = 640 * scaleFactor; 
             let circleRadius = 30 * scaleFactor;
             noFill();
-            stroke(60, 30, 80, 70 + 30 * sin(frameCount * 0.05));
-            strokeWeight(1 * scaleFactor);
-            ellipse(circleX, circleY, circleRadius * 2 + 5 * scaleFactor + 3 * scaleFactor * sin(frameCount * 0.05));
+            stroke(80, 40, 120, 140 + 80 * sin(frameCount * 0.05));  // Much higher opacity, more saturated purple
+            strokeWeight(2 * scaleFactor);  // Thicker stroke
+            ellipse(circleX, circleY, circleRadius * 2 + 5 * scaleFactor + 4 * scaleFactor * sin(frameCount * 0.05));
             
-            // Subtle grid animation in blue area
+            // Subtle grid animation in blue area - MUCH MORE VISIBLE
             if (isAnimating) {
                 push();
-                stroke(255, 255, 255, 20 + 10 * sin(frameCount * 0.02));
-                strokeWeight(0.3 * scaleFactor);
+                stroke(255, 255, 255, 70 + 50 * sin(frameCount * 0.02));  // Much higher opacity
+                strokeWeight(0.8 * scaleFactor);  // Thicker lines
                 let gridSize = 15 * scaleFactor;
                 let gridX = 150 * scaleFactor; // Blue grid area center
                 let gridY = 150 * scaleFactor;
@@ -244,36 +255,36 @@
                     line(gridX - gridWidth/2, y, gridX + gridWidth/2, y);
                 }
             
-                // Animated cross that matches the design
-                stroke(80, 170, 210, 90 + 40 * sin(frameCount * 0.03));
-                strokeWeight(1 * scaleFactor);
+                // Animated cross that matches the design - MUCH MORE VISIBLE
+                stroke(80, 170, 210, 150 + 105 * sin(frameCount * 0.03));  // Much higher opacity
+                strokeWeight(2.5 * scaleFactor);  // Much thicker stroke
                 let crossX = 400 * scaleFactor; 
                 let crossY = 400 * scaleFactor; 
-                let crossSize = (10 + 2 * sin(frameCount * 0.04)) * scaleFactor;
+                let crossSize = (12 + 3 * sin(frameCount * 0.04)) * scaleFactor;  // Larger cross
                 line(crossX - crossSize, crossY, crossX + crossSize, crossY);
                 line(crossX, crossY - crossSize, crossX, crossY + crossSize);
                 
                 pop();
                 
-                // Animated dots for the "END" tag
+                // Animated dots for the "END" tag - MUCH MORE VISIBLE
                 for (let i = 0; i < 3; i++) {
                     let dotX = 350 * scaleFactor + i * 15 * scaleFactor;
                     let dotY = 735 * scaleFactor;
-                    let alpha = 80 + 70 * sin(frameCount * 0.05 + i * 0.5);
+                    let alpha = 130 + 125 * sin(frameCount * 0.05 + i * 0.5);  // Much higher opacity
                     fill(100, 100, 100, alpha);
                     noStroke();
-                    ellipse(dotX, dotY, 3 * scaleFactor, 3 * scaleFactor);
+                    ellipse(dotX, dotY, 5 * scaleFactor, 5 * scaleFactor);  // Larger dots
                 }
                 
-                // Subtle movement of central line structure
+                // Subtle movement of central line structure - MUCH MORE VISIBLE
                 push();
-                stroke(0, 0, 0, 60);
-                strokeWeight(0.5 * scaleFactor);
+                stroke(0, 0, 0, 130);  // Higher opacity
+                strokeWeight(1.2 * scaleFactor);  // Thicker lines
                 let lineCount = 6;
                 let lineSpacing = 8 * scaleFactor;
                 let lineStartX = 700 * scaleFactor;
                 let lineY = 400 * scaleFactor;
-                let amplitude = 2 * scaleFactor;
+                let amplitude = 3 * scaleFactor;  // Larger movement
                 
                 for (let i = 0; i < lineCount; i++) {
                     let offset = amplitude * sin(frameCount * 0.03 + i * 0.2);
@@ -283,7 +294,7 @@
                 pop();
             }
             
-            // Sound control button
+            // Sound control button - MUCH MORE VISIBLE
             push();
             let buttonX = width - 40 * scaleFactor;
             let buttonY = height - 40 * scaleFactor;
@@ -291,13 +302,13 @@
 
             // Button background
             noStroke();
-            fill(0, 0, 0, 30);
+            fill(0, 0, 0, 60);  // More visible background
             rect(buttonX, buttonY, buttonSize, buttonSize, 5 * scaleFactor);
 
             // Sound icon
             if (soundEnabled) {
                 // Sound on icon
-                fill(60, 60, 60, 140);
+                fill(60, 60, 60, 220);  // Much higher opacity
                 noStroke();
                 // Speaker base
                 rect(buttonX + 10 * scaleFactor, buttonY + 12 * scaleFactor, 4 * scaleFactor, 6 * scaleFactor);
@@ -310,13 +321,13 @@
                 endShape(CLOSE);
                 // Sound waves
                 noFill();
-                stroke(60, 60, 60, 140);
-                strokeWeight(1 * scaleFactor);
+                stroke(60, 60, 60, 220);  // Much higher opacity
+                strokeWeight(1.5 * scaleFactor);  // Thicker lines
                 arc(buttonX + 18 * scaleFactor, buttonY + 15 * scaleFactor, 6 * scaleFactor, 8 * scaleFactor, -PI/3, PI/3);
                 arc(buttonX + 18 * scaleFactor, buttonY + 15 * scaleFactor, 10 * scaleFactor, 14 * scaleFactor, -PI/3, PI/3);
             } else {
                 // Sound off icon
-                fill(60, 60, 60, 140);
+                fill(60, 60, 60, 220);  // Much higher opacity
                 noStroke();
                 // Speaker base
                 rect(buttonX + 10 * scaleFactor, buttonY + 12 * scaleFactor, 4 * scaleFactor, 6 * scaleFactor);
@@ -328,8 +339,8 @@
                 vertex(buttonX + 10 * scaleFactor, buttonY + 18 * scaleFactor);
                 endShape(CLOSE);
                 // X over the speaker
-                stroke(60, 60, 60, 140);
-                strokeWeight(1.5 * scaleFactor);
+                stroke(60, 60, 60, 220);  // Much higher opacity
+                strokeWeight(2 * scaleFactor);  // Thicker lines
                 line(buttonX + 19 * scaleFactor, buttonY + 10 * scaleFactor, buttonX + 24 * scaleFactor, buttonY + 20 * scaleFactor);
                 line(buttonX + 24 * scaleFactor, buttonY + 10 * scaleFactor, buttonX + 19 * scaleFactor, buttonY + 20 * scaleFactor);
             }
@@ -367,12 +378,16 @@
                         pauseSound.stop();
                         soundPlaying = false;
                     }, 1000);
-                } else if (soundEnabled && isAnimating && !soundPlaying) {
+                } else if (soundEnabled && isAnimating && !soundPlaying && soundLoaded) {
                     // Start sound if animation is active
-                    pauseSound.loop();
-                    pauseSound.setVolume(0);
-                    pauseSound.setVolume(1, 1);
-                    soundPlaying = true;
+                    try {
+                        pauseSound.loop();
+                        pauseSound.setVolume(0);
+                        pauseSound.setVolume(1, 1);
+                        soundPlaying = true;
+                    } catch(e) {
+                        console.error("Error playing sound:", e);
+                    }
                 }
                 return false;
             }
@@ -382,6 +397,38 @@
 
         // Support touch events
         function touchStarted() {
+            // On first touch, try to initialize audio context for iOS
+            if (!soundPlaying && isAnimating && soundEnabled && soundLoaded) {
+                try {
+                    // Create and destroy a temporary oscillator to initialize audio context
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    const audioCtx = new AudioContext();
+                    const oscillator = audioCtx.createOscillator();
+                    oscillator.connect(audioCtx.destination);
+                    oscillator.start();
+                    oscillator.stop();
+                    
+                    console.log("Audio context initialized");
+                    
+                    // Try to play our sound after a slight delay
+                    setTimeout(() => {
+                        if (isAnimating && soundEnabled && !soundPlaying && soundLoaded) {
+                            try {
+                                pauseSound.loop();
+                                pauseSound.setVolume(0);
+                                pauseSound.setVolume(1, 1);
+                                soundPlaying = true;
+                                console.log("Sound started after touch");
+                            } catch(e) {
+                                console.error("Still couldn't play sound:", e);
+                            }
+                        }
+                    }, 500);
+                } catch(e) {
+                    console.error("Couldn't initialize audio:", e);
+                }
+            }
+            
             return mousePressed();
         }
 
@@ -399,14 +446,14 @@
                 pauseText = "";
 
                 // Start playing sound if it's enabled
-                if (soundEnabled && !soundPlaying) {
+                if (soundEnabled && !soundPlaying && soundLoaded) {
                     try {
                         pauseSound.loop();
                         pauseSound.setVolume(0);
                         pauseSound.setVolume(1, 1.5); // Fade in over 1.5 seconds
                         soundPlaying = true;
                     } catch(e) {
-                        console.log("Audio error:", e);
+                        console.error("Error starting audio:", e);
                     }
                 }
             } else {
@@ -472,51 +519,51 @@
                 
                 // Apply different styles based on the area of the image
                 if (this.colorScheme === 'blue') {
-                  // Blue grid area style
-                  fill(80, 170, 210, this.hover ? 180 : 120);
+                  // Blue grid area style - MORE VISIBLE
+                  fill(80, 170, 210, this.hover ? 220 : 180);  // Higher opacity
                   ellipse(this.x, this.y, this.radius * 2);
                   if (this.hover) {
                     stroke(255);
-                    strokeWeight(1 * scaleFactor);
+                    strokeWeight(1.5 * scaleFactor);  // Thicker stroke
                     noFill();
                     ellipse(this.x, this.y, this.radius * 2.2);
                   }
                  } 
                  else if (this.colorScheme === 'tag') {
-                   // END tag area style
+                   // END tag area style - MORE VISIBLE
                    noFill();
-                   stroke(100, 100, 100, this.hover ? 180 : 120);
-                   strokeWeight(1.5 * scaleFactor);
+                   stroke(100, 100, 100, this.hover ? 220 : 180);  // Higher opacity
+                   strokeWeight(2 * scaleFactor);  // Thicker stroke
                    rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3 * scaleFactor);
                    if (this.hover) {
-                      fill(220, 220, 220, 120);
+                      fill(220, 220, 220, 150);  // Higher opacity
                       rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2, 3 * scaleFactor);
                    }
                   }
                   else {
-                    // Center lines area style - make a small line segment instead of a circle
-                    stroke(0, 0, 0, this.hover ? 180 : 120);
-                    strokeWeight(2 * scaleFactor);
+                    // Center lines area style - MORE VISIBLE
+                    stroke(0, 0, 0, this.hover ? 220 : 180);  // Higher opacity
+                    strokeWeight(2.5 * scaleFactor);  // Thicker stroke
                     line(this.x - this.radius, this.y, this.x + this.radius, this.y);
       
                      if (this.hover) {
                         noFill();
-                        strokeWeight(1 * scaleFactor);
+                        strokeWeight(1.5 * scaleFactor);  // Thicker stroke
                         ellipse(this.x, this.y, this.radius * 2);
                      }
                     }
     
-                    // Clearer play/pause indication that fits the aesthetic
+                    // Clearer play/pause indication that fits the aesthetic - MORE VISIBLE
                     if (this.hover) {
                       if (isAnimating) {
-                        // Pause symbol
-                        fill(40, 40, 40, 180);
+                        // Pause symbol - MORE VISIBLE
+                        fill(40, 40, 40, 230);  // Higher opacity
                         noStroke();
                         rect(this.x - this.radius/3, this.y - this.radius/2, this.radius/4, this.radius);
                         rect(this.x + this.radius/8, this.y - this.radius/2, this.radius/4, this.radius);
                     } else {
-                        // Play symbol
-                        fill(40, 40, 40, 180);
+                        // Play symbol - MORE VISIBLE
+                        fill(40, 40, 40, 230);  // Higher opacity
                         noStroke();
                         beginShape();
                         vertex(this.x - this.radius/3, this.y - this.radius/2);
@@ -537,7 +584,7 @@
             }
         }
 
-        // Animated line class
+        // Animated line class with more visible dots
         class AnimatedLine {
             constructor(x1, y1, x2, y2) {
                 this.x1 = x1;
@@ -545,9 +592,9 @@
                 this.x2 = x2;
                 this.y2 = y2;
                 this.progress = random(0, 1); // Start at random positions
-                this.isAnimating = false;
+                this.isAnimating = false; // Start not animating
                 this.speed = random(0.005, 0.02);
-                this.dotSize = random(3, 6) * scaleFactor; // Varied dot sizes
+                this.dotSize = random(4, 8) * scaleFactor; // LARGER dot sizes
             }
             
             update() {
@@ -560,38 +607,69 @@
             }
             
             display() {
-                stroke(0, 0, 0, 100);
-                strokeWeight(0.8 * scaleFactor);
-
+                stroke(0, 0, 0, 150);  // More visible line
+                strokeWeight(1.2 * scaleFactor);  // Thicker line
+                
                 // Draw the line
                 line(this.x1, this.y1, this.x2, this.y2);
                 
                 if (this.isAnimating) {
-                    // Animate a dot moving along the line
+                    // Animate a dot moving along the line - MORE VISIBLE
                     let px = lerp(this.x1, this.x2, this.progress);
                     let py = lerp(this.y1, this.y2, this.progress);
                     
-                    // More elegant dots
-                    fill(0, 0, 0, 180);
+                    // More visible dots
+                    fill(0, 0, 0, 220);  // Much higher opacity
                     noStroke();
                     ellipse(px, py, this.dotSize, this.dotSize);
                 }
             }
         }
 
-        // For iOS/Safari, try to enable audio on first interaction
-        document.addEventListener('touchstart', function() {
-            if (pauseSound && soundEnabled && !soundPlaying && isAnimating) {
-                // Try to start sound on first interaction for iOS
+        // Add a special helper for mobile audio
+        function initAudioForMobile() {
+            // This needs to be called from a user gesture (click/touch)
+            if (soundLoaded) {
                 try {
-                    pauseSound.loop();
-                    pauseSound.setVolume(0);
-                    pauseSound.setVolume(1, 1.5);
-                    soundPlaying = true;
+                    // Create a silent sound
+                    const silence = new p5.Oscillator();
+                    silence.amp(0);
+                    silence.start();
+                    silence.stop(0.1);
+                    
+                    // If we got here, we might be able to play sound
+                    console.log("Audio initialized for mobile");
+                    
+                    // Try to start our actual sound after a delay if needed
+                    if (isAnimating && soundEnabled && !soundPlaying) {
+                        setTimeout(() => {
+                            try {
+                                pauseSound.loop();
+                                pauseSound.setVolume(0);
+                                pauseSound.setVolume(0.7, 1);
+                                soundPlaying = true;
+                            } catch(e) {
+                                console.error("Still couldn't play sound:", e);
+                            }
+                        }, 500);
+                    }
+                    
+                    return true;
                 } catch(e) {
-                    console.log("Couldn't autoplay audio:", e);
+                    console.error("Failed to initialize audio:", e);
+                    return false;
                 }
             }
+            return false;
+        }
+
+        // Add a global click handler for audio initialization
+        document.addEventListener('click', function() {
+            initAudioForMobile();
+        }, {once: true});
+        
+        document.addEventListener('touchstart', function() {
+            initAudioForMobile();
         }, {once: true});
     </script>
 </body>
